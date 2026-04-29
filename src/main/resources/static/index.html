@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BookMyShow Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #222; }
+        header { background: #d71920; color: white; padding: 18px 32px; font-size: 24px; font-weight: bold; }
+        main { max-width: 1000px; margin: 24px auto; background: white; padding: 24px; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        input, button { padding: 10px 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 15px; }
+        button { background: #d71920; color: white; border: none; cursor: pointer; }
+        button:hover { opacity: 0.9; }
+        .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-top: 16px; }
+        .show-btn { background: #222; margin: 6px; }
+        .screen { background: #222; color: white; text-align: center; padding: 10px; border-radius: 8px; margin: 20px 0; }
+        .seat-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 10px; }
+        .seat { background: #bdbdbd; border: none; color: white; min-height: 42px; border-radius: 8px; font-size: 13px; }
+        .seat.selected { background: #18a558; }
+        .seat.booked, .seat.locked { background: #d71920; cursor: not-allowed; }
+        .hidden { display: none; }
+        .summary { margin-top: 20px; font-weight: bold; }
+        .success { color: #148f3f; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
+<header>BookMyShow Demo - Dhurandhar</header>
+<main>
+    <section id="homePage">
+        <h2>Step 1: Load theatres from your backend API</h2>
+        <div class="row">
+            <input id="apiBaseUrl" style="width: 420px" value="http://localhost:8080" />
+            <input id="cityName" value="Hyderabad" />
+            <button onclick="loadHome()">Load Shows</button>
+        </div>
+        <div id="homeResult"></div>
+    </section>
+
+    <section id="seatPage" class="hidden">
+        <button onclick="goHome()">Back</button>
+        <h2 id="seatTitle">Select Seats</h2>
+        <div class="screen">SCREEN</div>
+        <div id="seatGrid" class="seat-grid"></div>
+        <div class="summary">Selected seats: <span id="selectedSeatsText">None</span></div>
+        <br />
+        <button onclick="goPayment()">Proceed to Payment</button>
+    </section>
+
+    <section id="paymentPage" class="hidden">
+        <button onclick="goSeats()">Back</button>
+        <h2>Step 3: Sample UPI Payment</h2>
+        <p>This is a local sample payment screen. Real UPI requires Razorpay/Cashfree/PhonePe/PayU payment gateway credentials.</p>
+        <div class="row">
+            <input id="upiId" value="shiva@upi" placeholder="Enter UPI ID" />
+            <input id="email" value="vodapallyshiva5@gmail.com" placeholder="Email" style="width: 260px" />
+            <button onclick="payNow()">Pay Now</button>
+        </div>
+        <div id="paymentResult"></div>
+    </section>
+</main>
+
+<script>
+    let selectedShowId = null;
+    let selectedShowLabel = '';
+    let selectedShowSeatIds = [];
+
+    function baseUrl() {
+        return document.getElementById('apiBaseUrl').value.replace(/\/$/, '');
+    }
+
+    async function loadHome() {
+        const city = document.getElementById('cityName').value;
+        const response = await fetch(`${baseUrl()}/api/bms/home/${city}`);
+        const data = await response.json();
+
+        const container = document.getElementById('homeResult');
+        container.innerHTML = `<h2>${data.cityName}</h2>`;
+
+        data.theatres.forEach(theatre => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<h3>${theatre.theatreName}</h3><p>Movie: ${theatre.movieName}</p>`;
+
+            theatre.shows.forEach(show => {
+                const btn = document.createElement('button');
+                btn.className = 'show-btn';
+                btn.innerText = show.displayTime;
+                btn.onclick = () => loadSeats(show.showId, `${theatre.theatreName} - ${show.displayTime}`);
+                card.appendChild(btn);
+            });
+
+            container.appendChild(card);
+        });
+    }
+
+    async function loadSeats(showId, label) {
+        selectedShowId = showId;
+        selectedShowLabel = label;
+        selectedShowSeatIds = [];
+        document.getElementById('selectedSeatsText').innerText = 'None';
+        document.getElementById('seatTitle').innerText = `Select Seats: ${label}`;
+
+        const response = await fetch(`${baseUrl()}/api/bms/shows/${showId}/seats`);
+        const seats = await response.json();
+
+        const grid = document.getElementById('seatGrid');
+        grid.innerHTML = '';
+
+        seats.forEach(seat => {
+            const btn = document.createElement('button');
+            btn.className = 'seat';
+            btn.innerText = seat.seatNumber;
+
+            if (seat.status === 'BOOKED' || seat.status === 'LOCKED') {
+                btn.classList.add(seat.status.toLowerCase());
+                btn.disabled = true;
+            }
+
+            btn.onclick = () => {
+                btn.classList.toggle('selected');
+                if (selectedShowSeatIds.includes(seat.showSeatId)) {
+                    selectedShowSeatIds = selectedShowSeatIds.filter(id => id !== seat.showSeatId);
+                } else {
+                    selectedShowSeatIds.push(seat.showSeatId);
+                }
+                document.getElementById('selectedSeatsText').innerText = selectedShowSeatIds.length ? selectedShowSeatIds.join(', ') : 'None';
+            };
+            grid.appendChild(btn);
+        });
+
+        showPage('seatPage');
+    }
+
+    function goPayment() {
+        if (!selectedShowSeatIds.length) {
+            alert('Please select at least one seat');
+            return;
+        }
+        showPage('paymentPage');
+    }
+
+    async function payNow() {
+        const payload = {
+            showSeatIds: selectedShowSeatIds,
+            userId: 1,
+            upiId: document.getElementById('upiId').value,
+            email: document.getElementById('email').value
+        };
+
+        const response = await fetch(`${baseUrl()}/api/bms/payments/upi`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        document.getElementById('paymentResult').innerHTML = `<p class="success">${data.message}</p><p>Ticket ID: ${data.ticketId}</p><p>Amount: ₹${data.amount}</p>`;
+    }
+
+    function showPage(pageId) {
+        ['homePage', 'seatPage', 'paymentPage'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById(pageId).classList.remove('hidden');
+    }
+
+    function goHome() { showPage('homePage'); }
+    function goSeats() { showPage('seatPage'); }
+</script>
+</body>
+</html>
