@@ -1,7 +1,6 @@
 package MySpringBootProject.BookMyShow.Service.Payment;
 
 import MySpringBootProject.BookMyShow.DTO.TicketEmailDTO;
-import MySpringBootProject.BookMyShow.Events.TicketBookedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.mail.SimpleMailMessage;
@@ -11,11 +10,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class TicketEmailConsumer {
     private final JavaMailSender mailSender;
-    private final ObjectMapper objectMapper;
 
-    public TicketEmailConsumer(JavaMailSender mailSender, ObjectMapper objectMapper) {
+    public TicketEmailConsumer(JavaMailSender mailSender) {
         this.mailSender = mailSender;
-        this.objectMapper = objectMapper;
     }
 
     @KafkaListener(topics = "ticket-booked", groupId = "bms-email-service")
