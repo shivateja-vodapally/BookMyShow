@@ -215,3 +215,4 @@ Give it a ⭐ on GitHub!
 
 This project supports Kafka-based email notifications.  
 Line A - resolved after commit 3
+Merge-commit - Testing the merge commit
