@@ -1,5 +1,5 @@
 package MySpringBootProject.BookMyShow.Models.Constants;
 
 public enum SeatType {
-    SILVER, GOLD, PLATINUM;
+    SILVER, GOLD, PLATINUM,VIP;
 }
