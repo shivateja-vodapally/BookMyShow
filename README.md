@@ -213,4 +213,5 @@ Give it a ⭐ on GitHub!
 
 ## Additional Note
 
-This project supports Kafka-based email notifications.        
+This project supports Kafka-based email notifications.
+Line A changed in main branch
