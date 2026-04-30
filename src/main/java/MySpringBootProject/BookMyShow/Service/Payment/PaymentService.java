@@ -94,6 +94,7 @@ public class PaymentService {
         response.setAmount(savedTicket.getTotalAmount());
         response.setMessage("Sample UPI payment completed. Ticket confirmation event published to Kafka.");
         System.out.println("REMOTE branch payment log");
+        System.out.println("LOCAL branch payment log");;
         return response;
     }
 
