@@ -2,7 +2,7 @@
 
 ## 🚀 Overview
 
-This project is a **movie ticket booking system** inspired by BookMyShow.
+This project is a Spring Boot movie ticket booking system with Kafka-based email notification.
 It allows users to browse shows, select seats, make payments, and receive ticket confirmations via email.
 
 The system is designed using **Spring Boot microservice-style architecture** with **Kafka for asynchronous communication**.
