@@ -210,3 +210,6 @@ http://localhost:8080/index.html
 
 Give it a ⭐ on GitHub!
 
+## Additional Note
+
+This project supports Kafka-based email notifications.        
